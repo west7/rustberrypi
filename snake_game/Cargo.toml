@@ -1,0 +1,20 @@
+[package]
+name = "snake_game"
+version = "0.1.0"
+edition = "2024"
+
+[target.thumbv6m-none-eabi]
+runner = "probe-run --chip RP2040"
+
+[dependencies]
+cortex-m = "0.7.7"
+cortex-m-rt = "0.7.2"
+critical-section = "1.1.1"
+embedded-hal = "0.2.7"
+fugit = "0.3.6"
+heapless = "0.7.16"
+panic-halt = "0.2.0"
+rp-pico = "0.6.0"
+rp2040-hal = "0.7.0"
+smart-leds = "0.3.0"
+ws2812-pio = "0.5.0"
