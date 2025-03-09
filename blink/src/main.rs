@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![allow(unused_imports)]
 
 extern crate panic_halt;
 extern crate embedded_hal;
@@ -50,7 +51,7 @@ fn main () -> ! {
         &mut pac.RESETS,
     );
 
-    let mut led_pin = pins.gpio12.into_push_pull_output();
+    let mut led_pin = pins.gpio11.into_push_pull_output();
     loop {
         led_pin.set_high().unwrap();
         delay.delay_ms(500);
