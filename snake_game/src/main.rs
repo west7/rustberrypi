@@ -1,21 +1,11 @@
 //! Snake Game
 //! 
-//! Este é um jogo da cobrinha implementado para rodar em um microcontrolador RP2040, utilizando a placa RP Pico.
+//! Este é um jogo da cobrinha implementado para rodar em um microcontrolador 
+//! RP2040, utilizando a placa BitDogLab.
 //! 
-//! Recursos utilizados:
-//! - `no_std` e `no_main` para rodar sem a biblioteca padrão e sem o ponto de entrada padrão.
-//! - `panic_halt` para lidar com panics.
-//! - `embedded_hal` para abstrações de hardware.
-//! - `rp_pico` e `rp2040_hal` para suporte específico ao hardware RP2040.
-//! - `smart_leds` e `ws2812_pio` para controle de LEDs WS2812.
+//! Os principais recursos usados são: o canal PIO para controlar LEDs ws2812 e o 
+//! canal ADC para ler os valores do joystick. 
 //! 
-//! Regras do jogo:
-//! - A cobra se move em um tabuleiro de 5x5 LEDs.
-//! - A cobra cresce ao comer uma maçã, que aparece em uma posição aleatória que não esteja ocupada pela cobra.
-//! - O jogo termina se a cobra colidir com as bordas do tabuleiro ou com ela mesma.
-//! - A direção da cobra é controlada por um joystick analógico.
-//! 
-//! O código inicializa o hardware, configura os LEDs e o joystick, e entra em um loop principal onde a lógica do jogo é executada.
 //! 
 //! Autor: Guilherme Westphall
 
@@ -189,9 +179,41 @@ const APPLE_COLOR: RGB8 = RGB8 { r: 255, g: 0, b: 0 };
 const SNAKE_COLOR: RGB8 = RGB8 { r: 0, g: 128, b: 0 };
 const EMPTY_COLOR: RGB8 = RGB8 { r: 0, g: 0, b: 0 };
 
+/// Função auxiliar para finalizar o jogo.
 fn game_over(led: &mut Pin<Gpio13, Output<PushPull>>) {
     led.set_high().unwrap();
     loop {}
+}
+
+/// Função auxiliar para ler o joystick e retornar a direção correspondente.
+fn read_joystick(x: u16, y: u16, current: Direction) -> Direction {
+    const DEADZONE: u16 = 50;
+    const ADC_MAX: u16 = 4096; // (0..4095)
+
+    if y >= ADC_MAX - DEADZONE {
+        Direction::UP
+    } else if y <= DEADZONE {
+        Direction::DOWN
+    } else if x >= ADC_MAX - DEADZONE {
+        Direction::RIGHT
+    } else if x <= DEADZONE {
+        Direction::LEFT
+    } else {
+        current
+    }
+}
+
+/// Função auxiliar para mapear as coordenadas da matriz para o
+/// vetor de leds
+fn pos_to_index(row: usize, col: usize) -> usize {
+    let r = BOARD_SIZE - 1 - row;
+    if r % 2 == 0 {
+        // Linha par a partir da base: mapeia da direita para a esquerda.
+        r * BOARD_SIZE + (BOARD_SIZE - 1 - col)
+    } else {
+        // Linha ímpar a partir da base: mapeia da esquerda para a direita.
+        r * BOARD_SIZE + col
+    }
 }
 
 #[entry]
@@ -313,33 +335,3 @@ fn main() -> ! {
     }
 }
 
-/// Função auxiliar para ler o joystick e retornar a direção correspondente.
-fn read_joystick(x: u16, y: u16, current: Direction) -> Direction {
-    const DEADZONE: u16 = 50;
-    const ADC_MAX: u16 = 4096; // (0..4095)
-
-    if y >= ADC_MAX - DEADZONE {
-        Direction::UP
-    } else if y <= DEADZONE {
-        Direction::DOWN
-    } else if x >= ADC_MAX - DEADZONE {
-        Direction::RIGHT
-    } else if x <= DEADZONE {
-        Direction::LEFT
-    } else {
-        current
-    }
-}
-
-/// Função auxiliar para mapear as coordenadas da matriz para o
-/// vetor de leds
-fn pos_to_index(row: usize, col: usize) -> usize {
-    let r = BOARD_SIZE - 1 - row;
-    if r % 2 == 0 {
-        // Linha par a partir da base: mapeia da direita para a esquerda.
-        r * BOARD_SIZE + (BOARD_SIZE - 1 - col)
-    } else {
-        // Linha ímpar a partir da base: mapeia da esquerda para a direita.
-        r * BOARD_SIZE + col
-    }
-}
